@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "qwiklabs-gcp-04-8b443af2ff27",
+  "private_key_id": "999005825c0e01d854c70a4dbce1816c8e996df1",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCnioVSp35GCk1h\nT6aRDBBA+cy1tFA1TzFFlzmCavp7leW+vFCSFnX/vsFA3IDN9mTZVCmeK9wR82rr\nF3CK0vYgzgjvm1KCj3HS/VWYKvgHSAEYFDBBnF+FBF6TBsDyZqYFVsjqkzzT3kWC\nlSAtPCenwbWp5Fgv16Gh35m6E2eooWEnNofbi9RduGpHWS/1BJcNcqWU3+Ck3YDv\njpv6Wv92KVSfHCt8gTUeVlzghnKlsrRsjydI19Ro2pR6GEeoURwQnRTczk+cUwlh\nyFcPwWrs4Tkv4BUwtfq+GJIupMI4gAJCIe1ds9v+V8k2ir8AuhLBh3QBchTsQWlT\ndHtY0MORAgMBAAECggEAA7ETnShifysYx5E7J5zh2nir+CtZYsSps9xFm2LS6E27\ngqorcVNMNX7adceAvBPBkaC0i7nGLza9+fZUgm6XF051l8gETQBZqaSaPKXiZ2YA\nsNXjC/26L21oTb+QmVbF3OjBDnArnzSEM2t99Rk1+3uTI+5LkNRPdAhqs/+w9qAn\nOvuhqeuJi9QLs3cpHyMVeljGRMBYUNeEETk/ZkW0c6t4jgFowGx82tc8Xkottz64\n8aQ53B9jHQbceeXXHVTquT93VQ3kDfbWnEQ0vzuwVfsR2qRWShHUY4zcT4s6U5hQ\na4kTBwmE7uUVlm6LX5s7cL5Mljh8DfRU+BmmUL8RFQKBgQDcW1dwgnvh1/uvkNNP\niBqF/ilSIoOzlMVwVxEkh98WQBGEuWzRDSyT8L0qUN0m4Ow1tnS9ZYIZIN1+iiaM\nUgPD8K7jE4P5o1gIV1G6ZMklcU4h9rBAXZelrXCVnxRlycbvi6g8cA9Z1jFj4g3T\nijeBi9cAHmtQr4CgVik43mYhdQKBgQDCpCgh0BEe0hjRjMjP5p8eNIOGjnPrQrxi\nqT7wxhDEfkW+4greyRuG9QCGzn88iVrXOauWP5ei1R5teuL4sCkFx+E1qv7x8PaH\nh59eO8VHHzsh6Td3Y0Bn78WSY9RHyCXnDlDvrb3OD4Fxx97iTniwzG8c05N5ZMsF\nguimjbsaLQKBgQC+FRkPV6+veNWGdAKkJ37huQZB8L31Kk9KggCqp34cPnYeLKme\nh6O9ljxHhWvP/tQj3VlEi4y3Sm9mmZt5DcJrwnHKNepxbKMixtgcVpZg8yV4DMmr\nLFEFPODSYGCDEZTGzIz6XZwQXcFLLRPKN/97g3qagqMF/e6R4OE8SjSFhQKBgEV9\noi5gQJyGWgIGh3NiXRDFoueZWF14GBYJYsVHkZj1lCUQQt1DY6aNNkDq3JZaW6pX\nlqEv1w11lUV1CC/NhPfhYtBsWlU6uGmuzAEyyb4Ysl3rC7h+IPJ6skkPhyyRkqap\nf8/ycb9t3cMnnrWhWomUk17xUseWar1u/WzpURGJAoGAM3j2KWWnmthyEBtbIgpi\nKf86Euctq76DlukCemr5Whv7H6HAKDbIQuvER0AgyXSu/dKiqoXccMRadkFNLRJD\ngu6A3ExiRek3WnW6f6vjIvRK8vhBAay29Gavrp7tO9dkmluVUzggUWxdPE4zCFSF\nFcr0S3AUGrywRFP1LOkwHz4=\n-----END PRIVATE KEY-----\n",
+  "client_email": "casacasa@qwiklabs-gcp-04-8b443af2ff27.iam.gserviceaccount.com",
+  "client_id": "115946602783122470864",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/casacasa%40qwiklabs-gcp-04-8b443af2ff27.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

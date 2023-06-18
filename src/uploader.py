@@ -1,7 +1,4 @@
-# Import the required packages
 from google.cloud import storage
-import zipfile
-import os
 
 # Define a class for uploading files to Google Cloud Storage
 class Uploader:
@@ -10,14 +7,13 @@ class Uploader:
         pass
 
     # Creating a function to upload a file to Google Cloud Storage
-    def upload_to_gcs(self,file_path, bucket_name, destination_blob_name):
-        # Initializing a storage client
-        storage_client = storage.Client()
-        # Getting the bucket object
-        bucket = storage_client.bucket(bucket_name)
-        # Creating a blob object
-        blob = bucket.blob(destination_blob_name)
-        # Uploading the file to the blob
-        blob.upload_from_filename(file_path)
-        # Printing the public URL of the blob
-        print(f"File {file_path} uploaded to {blob.public_url}.")
+    def upload_to_bucket(self,blob_name, path_to_file, bucket_name):
+        """ Upload data to a bucket"""
+        
+        # Explicitly use service account credentials by specifying the private key file.
+        storage_client = storage.Client.from_service_account_json('creds.json')
+        bucket = storage_client.get_bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        blob.upload_from_filename(path_to_file)
+        #returns a public url
+        return blob.public_url
