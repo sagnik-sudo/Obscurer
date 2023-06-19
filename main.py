@@ -7,23 +7,28 @@ from typing import List
 import os
 
 # Create a FastAPI app
-app = FastAPI(title="Casadona Warriors Data Endpoint",
-    description="This is a very cool API that does awesome stuff.",
-    version="1.0.0",
+app = FastAPI(
+    title="Casadona Warriors Data Endpoint",
+    description="This project is a FastAPI application that takes image, pdf, or docx files as input and converts them to a readable text file, then applies PII (Personally Identifiable Information) deidentification and finally gives that as the output to the user.",
+    version="beta",
     docs_url="/",
     redoc_url="/cw-redoc",
-    )
+    contact={
+        "name": "Developer - Sagnik Das, Somdutta Paul, Tania Rana",
+        "email": "sagnik.das03@infosys.com",
+    },
+)
 
-BUCKET_NAME = "waratcasadona"
-METADATATABLE = "gcs_table_source"
+BUCKET_NAME = "waratcasadona" # Modify bucket name here as per requirement
 
+# Initializing Uploader Module
 uploader = Uploader()
 
-@app.get("/health")
+@app.get("/health",tags=["Service Status"], name="Application Health Check")
 async def health():
     return {"Service Status":"Up and Running"}
 
-@app.post("/upload-file/")
+@app.post("/upload-file/",tags=["Upload Module"], name="Uploads single file to server")
 async def create_upload_file(file: UploadFile):
     """Upload Single File"""
     file_name = file.filename
@@ -35,7 +40,7 @@ async def create_upload_file(file: UploadFile):
     uploader.upload_to_bucket(file_name,temp_f,BUCKET_NAME)
     return {"Upload Status":f"Saved Successfully - {file_name}"}
 
-@app.post("/multi-upload/")
+@app.post("/multi-upload/",tags=["Upload Module"], name="Uploads multiple files to server")
 async def multiupload(files: List[UploadFile] = File(...)):
     """Upload Multiple Files"""
     tempdir = tempfile.gettempdir()
