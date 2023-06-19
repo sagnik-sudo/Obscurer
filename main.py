@@ -14,7 +14,8 @@ app = FastAPI(title="Casadona Warriors Data Endpoint",
     redoc_url="/cw-redoc",
     )
 
-BUCKET_NAME = "casacasa123451"
+BUCKET_NAME = "waratcasadona"
+METADATATABLE = "gcs_table_source"
 
 uploader = Uploader()
 
@@ -32,7 +33,6 @@ async def create_upload_file(file: UploadFile):
         content = await file.read()  # async read
         await out_file.write(content)  # async write
     uploader.upload_to_bucket(file_name,temp_f,BUCKET_NAME)
-    
     return {"Upload Status":f"Saved Successfully - {file_name}"}
 
 @app.post("/multi-upload/")
