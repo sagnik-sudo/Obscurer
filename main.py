@@ -19,7 +19,7 @@ app = FastAPI(
     },
 )
 
-BUCKET_NAME = "waratcasadona" # Modify bucket name here as per requirement
+BUCKET_NAME = "casa-bucket" # Modify bucket name here as per requirement
 
 # Initializing Uploader Module
 uploader = Uploader()

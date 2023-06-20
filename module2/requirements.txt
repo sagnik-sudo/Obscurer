@@ -2,8 +2,11 @@ docx2txt==0.8
 fastapi==0.97.0
 pandas==1.3.4
 pdf2image==1.16.0
-Pillow==8.4.0
+# Pillow==8.4.0
 Pillow==9.5.0
 PyPDF2==3.0.1
 python_pptx==0.6.19
 textract==1.6.5
+uvicorn==0.15.0
+gunicorn==20.1.0
+python-multipart
