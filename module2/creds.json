@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "casacasa-390303",
+  "private_key_id": "0fd9468b5726e8d8d4a2d611ab867b7d434df760",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC1sT0/Fx4Jpg8T\nKiYykmB9Kf5lrbwyzAFS2/D0PvDKKJI4PUHIxmJ1mgL4RyJ23K9FFTaqfGSputsZ\nQ1rYGWgFH3dk6YGknd2cfvrCF9pxJzzq9g//SvSNBw7gFNkixrh9UBP0EGxyinOg\njYXh6shVs/I25WkUEk656hWkO6/Ygkw71En5yWDhIi9lJAxEf9A5QmrkRiEsvJF7\nfet7HifBhzr7GrdpEh0yzeMoaQdDxbC3l+HC4y4gG/0Ocpi//raaXRk/KNfDaMxd\n+Ds9ae+FaUrA6Qpv1ZvqfdLtnmtT0MiQJNymTWn+Pm8JEkslJzXUbgl0z1yWzHGv\ng025NKa5AgMBAAECggEAU06F14Sg+CmUpePgibWF2j3D8Bj9voi9XqGL1GF7hCWg\nDXtAy27yvBs2m2H6UmeTUWiNnRPWD+CmDupMH+NeR2MLGlDaaYEcmGG8Vfwb41/r\nVYwm/5X9lSAUWPgWKxTUiFiMHY7eOpJyu73IEjLVUj5ko3kCefp+8E19SMU5NlqY\npX/cqU8OxALiPnoojb8ypF2IxS8X6cz0LHY5TJAFd/Hc6Fu1Sj1dnsZf4qoEMjWJ\n+3XW80qbVajiAblww51fFZC3fZ/TrGB/mPsteAP6O2TMvIxUmxQh2SAiHWjR/Tjz\nSkWCmrBonNGw09JGCB1KgNJfc/WT8/DdNPbSPSJ39QKBgQDzSlfjrTq3xT5gFl/0\nCJK5cJo/en4uPzsJ8aAbt+SO5bV/DU9e1GFaR48tpOQkYq3EUG1J0SxiCbglYLmU\n9xIREyKPUuENa7JNZeiqWoJBlIlJUR6igG+agj91yFqy0b5U2MhRx0xGmODaTw3b\nDQ9k7pz8HredNLYx+klxdguWJwKBgQC/LxxvfXPdyt1bwXfPwG5GLloJboCBF5n/\nV/TQ5/DiM9+HPi/TuI9miqs7dtfQwa0UbV66l3ADNt9pNe1nsQ1FH394Ca2hBY8E\nZ5CbEuzXEcs1ZvSXxKilH2caBmQF4Y7oZ6NzXUVIU2Djtt1CIOhqzv6AN8NsUqsX\nIaKn8enIHwKBgQDiU0u1wwY3xSdErivvUjZkiosD+Ij/rtTWaFBA2O6nvKv+GLy4\nhCxYlu9sT9PowV/Tm9o/bHa0cUQ8iWG7YakN91YULM6t9H03oVEzgOVh6rNYYD12\ngLLR8s7kXFF7vsEoH08jPJsJpdivXhGOsPScOZoStOStO0cu8R53jZAzywKBgHfK\npR6WlMscGacsik36XR5MXM4cFxjMGQoNqrBbJGwX5K9xH7ahpfiyWqhfxspfEHwE\nK57u1JivAT2DNMYMAiyVl+E27zw9p2czHUCNkykPVSyY3hlad/E+w/Ninbmxo0Gr\n7paSkp7G36bPJcQRqo+CM6VTS3fMNLfBs5FX2wwxAoGBAIK0FRUrUuIQPVXTWGRc\nPz3rBpIdgcv74KDQ4BibjPpMuUGpwe2QVJVtSd5Vgr3zF3kwiRAHo0qQFCU5CmFv\naKcJhWoofxgcEB/NIY41GUvO4B4Vv17yaIRtzwks8F1hSD/S+q8oruna68lLCHMC\nmpWmerzEXnlzBlgnW+7lVPJt\n-----END PRIVATE KEY-----\n",
+  "client_email": "war-at-casadona@casacasa-390303.iam.gserviceaccount.com",
+  "client_id": "102971363319343832912",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/war-at-casadona%40casacasa-390303.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

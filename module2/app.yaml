@@ -1,0 +1,6 @@
+runtime: python39
+entrypoint: uvicorn main:app --host=0.0.0.0 --port=${PORT:-8080}
+
+handlers:
+- url: /.*
+  script: auto
