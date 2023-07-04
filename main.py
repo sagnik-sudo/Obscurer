@@ -16,7 +16,6 @@ from starlette.responses import StreamingResponse
 from io import StringIO
 import pandas as pd
 import json
-from datetime import datetime
 
 app = FastAPI(
     title="Obscurer",
@@ -59,7 +58,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Endpoint for uploading and start of data pipeline
-@app.post("/upload",tags=["Data Pipeline"], name="Upload Multiple Files and Start Pipeline")
+
+
+@app.post("/upload", tags=["Data Pipeline"],
+          name="Upload Multiple Files and Start Pipeline")
 async def upload_files(files: List[UploadFile] = File(...)):
     try:
         for file in files:
@@ -68,7 +70,8 @@ async def upload_files(files: List[UploadFile] = File(...)):
             # Store the uploaded file in Google Cloud Storage
             blob = gcs_client.bucket(GCS_BUCKET).blob(file.filename)
             blob.upload_from_file(file.file)
-            logger.info(f"Uploaded file '{file.filename}' to Google Cloud Storage")
+            logger.info(
+                f"Uploaded file '{file.filename}' to Google Cloud Storage")
 
             # Store metadata information in BigQuery
             metadata = {
@@ -77,13 +80,15 @@ async def upload_files(files: List[UploadFile] = File(...)):
                 "content_type": file.content_type,
                 "size": file.file.seek(0, os.SEEK_END),
                 "recordstamp": datetime.datetime.now(),
-                "operation" : "I",
+                "operation": "I",
             }
             table = bq_client.dataset(BQ_DATASET).table(PRIMARY_BQ_TABLE)
             row = (metadata,)
-            bq_client.insert_rows(table, row, selected_fields=schema)  # Provide the table schema explicitly
+            # Provide the table schema explicitly
+            bq_client.insert_rows(table, row, selected_fields=schema)
 
-            logger.info(f"Inserted metadata for file '{file.filename}' into BigQuery")
+            logger.info(
+                f"Inserted metadata for file '{file.filename}' into BigQuery")
 
             # Process the uploaded file asynchronously
             asyncio.create_task(process_file(blob))
@@ -92,23 +97,27 @@ async def upload_files(files: List[UploadFile] = File(...)):
         return {"process": "Files uploaded and processing pipeline started."}
     except Exception as e:
         logger.error(f"Error occured while upload: {e}")
-        raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
+        raise HTTPException(
+            status_code=412,
+            detail="Couldn't process request at this time. Please try again later")
 
 # Data Pipeline Process
+
+
 async def process_file(blob):
     try:
         logger.info(f"Processing file: {blob.name}")
         # Read the file into memory
         image_content = blob.download_as_bytes()
 
-            # Determine the file extension from the blob name
+        # Determine the file extension from the blob name
         file_extension = blob.name.split(".")[-1].lower()
-        
+
         # Skip Document AI processing for .txt files
         if file_extension == "txt":
             # Read the file content
             text_content = blob.download_as_text()
-            
+
             # Remove PII information using Google Cloud DLP
             dlp_request = {
                 "parent": f"projects/{PROJECT_ID}/locations/global",
@@ -133,11 +142,14 @@ async def process_file(blob):
             dlp_response = dlp_client.deidentify_content(dlp_request)
             deidentified_text = dlp_response.item.value
 
-            # Store the deidentified text in a different folder in the same bucket
-            deidentified_blob = gcs_client.bucket(GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
+            # Store the deidentified text in a different folder in the same
+            # bucket
+            deidentified_blob = gcs_client.bucket(
+                GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
             deidentified_blob.upload_from_string(deidentified_text)
 
-            logger.info(f"Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
+            logger.info(
+                f"Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
         else:
             mime_type = ""
             # Set the mime_type based on the file extension
@@ -158,16 +170,19 @@ async def process_file(blob):
             else:
                 logger.error(f"Unsupported file type: {file_extension}")
                 return
-            
+
             # Load Binary Data into Document AI RawDocument Object
-            raw_document = documentai.RawDocument(content=image_content, mime_type=mime_type)
+            raw_document = documentai.RawDocument(
+                content=image_content, mime_type=mime_type)
 
             # Configure the process request
             docai_client = documentai.DocumentProcessorServiceClient(
-            client_options=ClientOptions(api_endpoint=f"{LOCATION}-documentai.googleapis.com")
-        )
-            RESOURCE_NAME = docai_client.processor_path(PROJECT_ID, LOCATION, PROCESSOR_ID)
-            request = documentai.ProcessRequest(name=RESOURCE_NAME, raw_document=raw_document)
+                client_options=ClientOptions(
+                    api_endpoint=f"{LOCATION}-documentai.googleapis.com"))
+            RESOURCE_NAME = docai_client.processor_path(
+                PROJECT_ID, LOCATION, PROCESSOR_ID)
+            request = documentai.ProcessRequest(
+                name=RESOURCE_NAME, raw_document=raw_document)
 
             # Use the Document AI client to process the document
             result = docai_client.process_document(request=request)
@@ -176,11 +191,14 @@ async def process_file(blob):
             annotations = document_object.text
 
             if annotations:
-                # Store the processed text in a different folder in the same bucket
-                processed_blob = gcs_client.bucket(GCS_BUCKET).blob(f"processed/{blob.name}.txt")
+                # Store the processed text in a different folder in the same
+                # bucket
+                processed_blob = gcs_client.bucket(
+                    GCS_BUCKET).blob(f"processed/{blob.name}.txt")
                 processed_blob.upload_from_string(annotations)
 
-                logger.info(f"Stored processed text for file '{blob.name}' in Google Cloud Storage")
+                logger.info(
+                    f"Stored processed text for file '{blob.name}' in Google Cloud Storage")
 
                 # Remove PII information using Google Cloud DLP
                 dlp_request = {
@@ -206,16 +224,22 @@ async def process_file(blob):
                 dlp_response = dlp_client.deidentify_content(dlp_request)
                 deidentified_text = dlp_response.item.value
 
-                # Store the deidentified text in a different folder in the same bucket
-                deidentified_blob = gcs_client.bucket(GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
+                # Store the deidentified text in a different folder in the same
+                # bucket
+                deidentified_blob = gcs_client.bucket(
+                    GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
                 deidentified_blob.upload_from_string(deidentified_text)
 
-                logger.info(f"Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
+                logger.info(
+                    f"Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
     except Exception as e:
         logger.error(f"Uploader script failed due to {e}")
 
 # Endpoint useful for fetching data as JSON
-@app.post("/fetch",tags=["Stream Data"], name="Fetch PII Deidentified Data as JSON")
+
+
+@app.post("/fetch", tags=["Stream Data"],
+          name="Fetch PII Deidentified Data as JSON")
 async def fetch_processed_text(name: str):
     logger.info(f"Fetching processed text for name: {name}")
 
@@ -238,7 +262,10 @@ async def fetch_processed_text(name: str):
     return {"texts": texts}
 
 # Endpoint useful for downloading text
-@app.post("/download",tags=["Stream Data"], name="Download PII Deidentified Data")
+
+
+@app.post("/download", tags=["Stream Data"],
+          name="Download PII Deidentified Data")
 async def download_processed_text(name: str):
     logger.info(f"Downloading processed text for name: {name}")
 
@@ -266,16 +293,20 @@ async def download_processed_text(name: str):
     return StreamingResponse(
         stream,
         media_type="text/plain",
-        headers={"Content-Disposition": f"attachment; filename={name}_processed.txt"},
+        headers={
+            "Content-Disposition": f"attachment; filename={name}_processed.txt"},
     )
 
 # Update metadata content for a given folder in a given BQ table
+
+
 async def process_bucket(table_name, folder_name=None):
     # Get the bucket
     bucket = gcs_client.get_bucket(GCS_BUCKET)
 
     # List all blobs in the bucket or folder
-    blobs = bucket.list_blobs(prefix=folder_name) if folder_name else bucket.list_blobs()
+    blobs = bucket.list_blobs(
+        prefix=folder_name) if folder_name else bucket.list_blobs()
 
     # Create a BigQuery table if it doesn't exist
     table_id = f"{bq_client.project}.{BQ_DATASET}.{table_name}"
@@ -309,7 +340,8 @@ async def process_bucket(table_name, folder_name=None):
         table = bq_client.create_table(table, exists_ok=True)
 
         # Insert rows into the BigQuery table and overwrite existing data
-        job_config = bigquery.LoadJobConfig(write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE)
+        job_config = bigquery.LoadJobConfig(
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE)
         load_job = bq_client.load_table_from_json(
             rows_to_insert,
             table_id,
@@ -318,32 +350,44 @@ async def process_bucket(table_name, folder_name=None):
         load_job.result()  # Wait for the job to complete
 
         if load_job.errors:
-            logger.error(f"Error occurred while inserting rows: {load_job.errors}")
+            logger.error(
+                f"Error occurred while inserting rows: {load_job.errors}")
         else:
-            logger.info(f"Metadata stored in BigQuery table {table_name} successfully.")
+            logger.info(
+                f"Metadata stored in BigQuery table {table_name} successfully.")
     else:
-        logger.info(f"No files found in the specified bucket {GCS_BUCKET} / folder {folder_name}.")
+        logger.info(
+            f"No files found in the specified bucket {GCS_BUCKET} / folder {folder_name}.")
 
 # Runs metadata updation for each folder
+
+
 async def metadata_handler():
     try:
         await process_bucket("raw_file_meta_direct")
-        await process_bucket("processed_meta_direct","processed")
-        await process_bucket("deidentified_meta_direct","deidentified")
+        await process_bucket("processed_meta_direct", "processed")
+        await process_bucket("deidentified_meta_direct", "deidentified")
     except Exception as e:
         logger.error(f"Uploader script failed due to {e}")
 
 # Endpoint is useful for manual metadata updation
-@app.put("/update_bq",tags=["Data Pipeline"], name="Manual Metadata Update")
+
+
+@app.put("/update_bq", tags=["Data Pipeline"], name="Manual Metadata Update")
 async def force_update_metadata():
     try:
         asyncio.create_task(metadata_handler())
-        return {"process": "Metadata handler enabled, BigQuery tables update started."}
+        return {
+            "process": "Metadata handler enabled, BigQuery tables update started."}
     except Exception as e:
         logger.error(f"Error occured while metadata update: {e}")
-        raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
+        raise HTTPException(
+            status_code=412,
+            detail="Couldn't process request at this time. Please try again later")
 
 # Function to get proccessed status from Big Query
+
+
 async def get_processed_status():
     query = f"SELECT * FROM `{PROJECT_ID}.{REPORTING_DATASET}.processed_view`"
     results = bq_client.query(query)
@@ -357,10 +401,15 @@ async def get_processed_status():
     for row in results:
         deidentified_dict[row['file_name']] = row['size']
     logger.info("Prepared Dictionary for Deidentified View Successfully")
-    return {"ocr_complete":processed_dict,"deidentify_complete":deidentified_dict}
+    return {"ocr_complete": processed_dict,
+            "deidentify_complete": deidentified_dict}
 
 # Endpoint is useful for fetching list of files processed
-@app.post("/processed_files_list",tags=["Data Pipeline"], name="Fetch List Of File Processed")
+
+
+@app.post("/processed_files_list",
+          tags=["Data Pipeline"],
+          name="Fetch List Of File Processed")
 async def fetch_processed_status():
     try:
         result = await get_processed_status()
@@ -368,20 +417,30 @@ async def fetch_processed_status():
         return result
     except Exception as e:
         logger.error(f"Error occured while fetching file process status: {e}")
-        raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
+        raise HTTPException(
+            status_code=412,
+            detail="Couldn't process request at this time. Please try again later")
 
 # Upload drug database to BigQuery
-@app.post("/upload_drug_db",tags=["Data Pipeline"], name="Upload Drug Database")
+
+
+@app.post("/upload_drug_db",
+          tags=["Data Pipeline"],
+          name="Upload Drug Database")
 async def upload_drug_db(data_file: UploadFile = File(...)):
     try:
         await drug_db_update(data_file)
-        return {"process":"File Upload Started. Please check DB in sometime."}
+        return {"process": "File Upload Started. Please check DB in sometime."}
     except Exception as e:
         logger.error(f"Error occured while uploading DB: {e}")
-        raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
+        raise HTTPException(
+            status_code=412,
+            detail="Couldn't process request at this time. Please try again later")
+
 
 async def drug_db_update(data_file):
-    df = pd.read_csv(StringIO(str(data_file.file.read(), 'utf-8')), encoding='utf-8')
+    df = pd.read_csv(
+        StringIO(str(data_file.file.read(), 'utf-8')), encoding='utf-8')
     dataset_ref = bq_client.dataset(BQ_DATASET)
     table_ref = dataset_ref.table(DRUG_DB_TABLE)
     bq_client.load_table_from_dataframe(df, table_ref).result()
