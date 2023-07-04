@@ -342,3 +342,34 @@ async def force_update_metadata():
     except Exception as e:
         logger.error(f"Error occured while metadata update: {e}")
         raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
+
+# Function to get proccessed status from Big Query
+async def get_processed_status():
+    query = """
+    SELECT * FROM `casacasa-390303.Obscurer_reporting.processed_view`
+    """
+    results = bq_client.query(query)
+    processed_dict = dict()
+    for row in results:
+        processed_dict[row['file_name']] = row['size']
+    logger.info("Prepared Dictionary for Processed View Successfully")
+    query = """
+    SELECT * FROM `casacasa-390303.Obscurer_reporting.deidentified_view`
+    """
+    results = bq_client.query(query)
+    deidentified_dict = dict()
+    for row in results:
+        deidentified_dict[row['file_name']] = row['size']
+    logger.info("Prepared Dictionary for Deidentified View Successfully")
+    return {"ocr_complete":processed_dict,"deidentify_complete":deidentified_dict}
+
+# Endpoint is useful for fetching list of files processed
+@app.post("/processed_files_list",tags=["Stream Data"], name="Fetch List Of File Processed")
+async def fetch_processed_status():
+    try:
+        result = await get_processed_status()
+        logger.info("Processed File List Fetched Successfully")
+        return result
+    except Exception as e:
+        logger.error(f"Error occured while fetching file process status: {e}")
+        raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
