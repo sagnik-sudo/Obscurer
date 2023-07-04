@@ -13,7 +13,10 @@ import uuid
 from google.api_core.client_options import ClientOptions
 from google.cloud import documentai
 from starlette.responses import StreamingResponse
-
+from io import StringIO
+import pandas as pd
+import json
+from datetime import datetime
 
 app = FastAPI(
     title="Obscurer",
@@ -33,6 +36,8 @@ PROCESSOR_ID = "d13502f20685f48"
 BQ_DATASET = "metadata"
 LOCATION = "us"  # Replace with your processor's location
 PRIMARY_BQ_TABLE = "raw_files"
+DRUG_DB_TABLE = "drug_database"
+REPORTING_DATASET = "Obscurer_reporting"
 
 gcs_client = storage.Client(project=PROJECT_ID)
 bq_client = bigquery.Client(project=PROJECT_ID)
@@ -63,7 +68,6 @@ async def upload_files(files: List[UploadFile] = File(...)):
             # Store the uploaded file in Google Cloud Storage
             blob = gcs_client.bucket(GCS_BUCKET).blob(file.filename)
             blob.upload_from_file(file.file)
-
             logger.info(f"Uploaded file '{file.filename}' to Google Cloud Storage")
 
             # Store metadata information in BigQuery
@@ -284,10 +288,6 @@ async def process_bucket(table_name, folder_name=None):
     table = bq_client.create_table(table, exists_ok=True)
 
     # Process each blob and store metadata in BigQuery
-    import json
-    from datetime import datetime
-
-    # Process each blob and store metadata in BigQuery
     rows_to_insert = []
     for blob in blobs:
         row = {
@@ -345,17 +345,13 @@ async def force_update_metadata():
 
 # Function to get proccessed status from Big Query
 async def get_processed_status():
-    query = """
-    SELECT * FROM `casacasa-390303.Obscurer_reporting.processed_view`
-    """
+    query = f"SELECT * FROM `{PROJECT_ID}.{REPORTING_DATASET}.processed_view`"
     results = bq_client.query(query)
     processed_dict = dict()
     for row in results:
         processed_dict[row['file_name']] = row['size']
     logger.info("Prepared Dictionary for Processed View Successfully")
-    query = """
-    SELECT * FROM `casacasa-390303.Obscurer_reporting.deidentified_view`
-    """
+    query = f"SELECT * FROM `{PROJECT_ID}.{REPORTING_DATASET}.deidentified_view`"
     results = bq_client.query(query)
     deidentified_dict = dict()
     for row in results:
@@ -364,7 +360,7 @@ async def get_processed_status():
     return {"ocr_complete":processed_dict,"deidentify_complete":deidentified_dict}
 
 # Endpoint is useful for fetching list of files processed
-@app.post("/processed_files_list",tags=["Stream Data"], name="Fetch List Of File Processed")
+@app.post("/processed_files_list",tags=["Data Pipeline"], name="Fetch List Of File Processed")
 async def fetch_processed_status():
     try:
         result = await get_processed_status()
@@ -373,3 +369,19 @@ async def fetch_processed_status():
     except Exception as e:
         logger.error(f"Error occured while fetching file process status: {e}")
         raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
+
+# Upload drug database to BigQuery
+@app.post("/upload_drug_db",tags=["Data Pipeline"], name="Upload Drug Database")
+async def upload_drug_db(data_file: UploadFile = File(...)):
+    try:
+        await drug_db_update(data_file)
+        return {"process":"File Upload Started. Please check DB in sometime."}
+    except Exception as e:
+        logger.error(f"Error occured while uploading DB: {e}")
+        raise HTTPException(status_code=412, detail="Couldn't process request at this time. Please try again later")
+
+async def drug_db_update(data_file):
+    df = pd.read_csv(StringIO(str(data_file.file.read(), 'utf-8')), encoding='utf-8')
+    dataset_ref = bq_client.dataset(BQ_DATASET)
+    table_ref = dataset_ref.table(DRUG_DB_TABLE)
+    bq_client.load_table_from_dataframe(df, table_ref).result()
