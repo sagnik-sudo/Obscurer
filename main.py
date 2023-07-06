@@ -29,14 +29,14 @@ app = FastAPI(
     },
 )
 
-PROJECT_ID = "casacasa-390303"
-GCS_BUCKET = "sample1112345"
-PROCESSOR_ID = "d13502f20685f48"
-BQ_DATASET = "metadata"
+PROJECT_ID = "gcds-oht33219u9-2023"
+GCS_BUCKET = "obscurer_store"
+PROCESSOR_ID = "917f5f3b88b6cd3d"
+BQ_DATASET = "obscurer_meta"
 LOCATION = "us"  # Replace with your processor's location
 PRIMARY_BQ_TABLE = "raw_files"
 DRUG_DB_TABLE = "drug_database"
-REPORTING_DATASET = "Obscurer_reporting"
+REPORTING_DATASET = "obscurer_reporting"
 
 gcs_client = storage.Client(project=PROJECT_ID)
 bq_client = bigquery.Client(project=PROJECT_ID)
@@ -424,23 +424,23 @@ async def fetch_processed_status():
 # Upload drug database to BigQuery
 
 
-@app.post("/upload_drug_db",
-          tags=["Data Pipeline"],
-          name="Upload Drug Database")
-async def upload_drug_db(data_file: UploadFile = File(...)):
-    try:
-        await drug_db_update(data_file)
-        return {"process": "File Upload Started. Please check DB in sometime."}
-    except Exception as e:
-        logger.error(f"Error occured while uploading DB: {e}")
-        raise HTTPException(
-            status_code=412,
-            detail="Couldn't process request at this time. Please try again later")
+# @app.post("/upload_drug_db",
+#           tags=["Data Pipeline"],
+#           name="Upload Drug Database")
+# async def upload_drug_db(data_file: UploadFile = File(...)):
+#     try:
+#         await drug_db_update(data_file)
+#         return {"process": "File Upload Started. Please check DB in sometime."}
+#     except Exception as e:
+#         logger.error(f"Error occured while uploading DB: {e}")
+#         raise HTTPException(
+#             status_code=412,
+#             detail="Couldn't process request at this time. Please try again later")
 
 
-async def drug_db_update(data_file):
-    df = pd.read_csv(
-        StringIO(str(data_file.file.read(), 'utf-8')), encoding='utf-8')
-    dataset_ref = bq_client.dataset(BQ_DATASET)
-    table_ref = dataset_ref.table(DRUG_DB_TABLE)
-    bq_client.load_table_from_dataframe(df, table_ref).result()
+# async def drug_db_update(data_file):
+#     df = pd.read_csv(
+#         StringIO(str(data_file.file.read(), 'utf-8')), encoding='utf-8')
+#     dataset_ref = bq_client.dataset(BQ_DATASET)
+#     table_ref = dataset_ref.table(DRUG_DB_TABLE)
+#     bq_client.load_table_from_dataframe(df, table_ref).result()
