@@ -1,23 +1,20 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from google.cloud import storage, bigquery, dlp_v2
+from google.cloud import storage, bigquery, dlp_v2,language_v1, documentai
 from google.protobuf.json_format import MessageToDict
 import os
 import io
 import asyncio
 import logging
 from typing import List
-from google.cloud import bigquery
 from google.cloud.bigquery.schema import SchemaField
 import datetime
 import uuid
 from google.api_core.client_options import ClientOptions
-from google.cloud import documentai
 from starlette.responses import StreamingResponse
 from io import StringIO
 import pandas as pd
 import json
 import glob
-from google.cloud import language_v1
 
 app = FastAPI(
     title="Obscurer",
