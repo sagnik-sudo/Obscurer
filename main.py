@@ -18,7 +18,7 @@ import glob
 
 app = FastAPI(
     title="Obscurer",
-    description="This project is a FastAPI application that takes image, pdf, or docx files as input and converts them to a readable text file, then applies PII (Personally Identifiable Information) deidentification and finally gives that as the output to the user.",
+    description="Obscurer is a data pipeline application that uses FastAPI and Google Cloud Platform to perform text extraction and PII deidentification on PDF documents or images in the healthcare domain. It also helps identify documents that contain medicine names or compositions.",
     version="1.0.0",
     docs_url="/",
     redoc_url="/cw-redoc",

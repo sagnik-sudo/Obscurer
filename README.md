@@ -1,12 +1,37 @@
-# Casadona Warriors Hackathon
-This project is a FastAPI application that takes image, pdf, or docx files as input and converts them to a readable text file, then applies PII (Personally Identifiable Information) deidentification and finally gives that as the output to the user.
+# Obscurer
+Obscurer is a data pipeline application that uses FastAPI and Google Cloud Platform to perform text extraction and PII deidentification on PDF documents or images in the healthcare domain. It also helps identify documents that contain medicine names or compositions.
+
+## Features
+- Upload PDF documents or images related to healthcare to Google Cloud Storage
+- Extract text from PDF documents or images using Google Cloud Documents AI
+- Deidentify PII (such as patient names, medical records, insurance numbers, etc.) from the extracted text using Google Cloud DLP API
+- Analyze entities and entity sentiments from the deidentified text using Google Cloud Natural Language API
+- Identify medicine names or compositions from the entities using a custom dictionary
+- Store the results in Google BigQuery tables
+- Query the results using a FastAPI web service
+
+## How to use
+- Clone this repository to your local machine
+- Create a Google Cloud project and enable the required APIs (Documents AI, DLP, Natural Language, BigQuery, App Engine)
+- Set up authentication using a service account and a service account key
+- Configure the environment variables in the .env file
+- Run the main.py script to start the data pipeline
+- Visit the web service URL to upload documents and query results
 
 ## Installation
-To install the required dependencies, run the following command in your terminal:
+To install the required dependencies and setup App Engine environment, run the following command in your terminal:
 
-```pip install -r requirements.txt```
+```bash
+git clone https://github.com/sagnik-sudo/Obscurer.git
+cd Obscurer/
+python -m venv ./env
+gcloud config set project <PROJECT_ID>
+source env/bin/activate
+pip install -r requirements.txt
+gcloud app deploy --no-cache -v 2
+gcloud app logs tail -s default
+```
 
-This will install FastAPI, Uvicorn, PyTesseract, pdf2image, docx2txt, and google cloud modules.
 
 ## Authentication
 
@@ -25,20 +50,24 @@ To authorize the gcloud CLI with a service account using external credentials fr
 
 4. To activate your service account, run gcloud auth login with the --cred-file flag:
 
-    ```gcloud auth login --cred-file=creds.json```
+    ```bash
+    gcloud auth login --cred-file=creds.json
+    ```
 
 ## Running the code
 ### Development environment
 
 To run the code in a development environment, use Uvicorn as follows:
 
-```python -m uvicorn main:app --reload --port 7777```
+```bash
+python -m uvicorn main:app --reload --port 7777
+```
 
 This will start a local server at `http://127.0.0.1:7777`. You can access the interactive documentation at `http://127.0.0.1:7777`.
 
 To test the application, you can use the curl command or any HTTP client. For example:
 
-```
+```bash
 curl -X 'POST' \
   'http://127.0.0.1:7777/upload-file/' \
   -H 'accept: application/json' \
@@ -52,23 +81,21 @@ This will upload your file to the server and return a JSON response with the dei
 To run the code in a production environment, you can deploy it to Google App Engine using the following steps:
 
 - Create an app.yaml file in your project directory with the following content:
-```
-runtime: python
-env: flex
-entrypoint: gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
+```yaml
+runtime: python39
+entrypoint: uvicorn main:app --host=0.0.0.0 --port=${PORT:-8080}
 
 handlers:
 - url: /.*
   script: auto
-
-runtime_config:
-  python_version: 3
 ```
 - Run the following command to deploy your app:
 
-```gcloud app deploy```
+```bash
+gcloud app deploy
+```
 
-This will create a URL for your app, such as `https://your-project-id.appspot.com.` You can access the interactive documentation at `https://your-project-id.appspot.com/docs`.
+This will create a URL for your app, such as `https://your-project-id.appspot.com.`
 
 To test the application, you can use the same curl command or any HTTP client as before, but with the new URL.
 
