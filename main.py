@@ -16,6 +16,7 @@ from starlette.responses import StreamingResponse
 from io import StringIO
 import pandas as pd
 import json
+import glob
 
 app = FastAPI(
     title="Obscurer",
@@ -42,6 +43,7 @@ gcs_client = storage.Client(project=PROJECT_ID)
 bq_client = bigquery.Client(project=PROJECT_ID)
 vision_client = vision_v1.ImageAnnotatorClient()
 dlp_client = dlp_v2.DlpServiceClient()
+sql_files = glob.glob("./sql/*.sql")
 
 table_ref = bq_client.dataset(BQ_DATASET).table(PRIMARY_BQ_TABLE)
 table = bq_client.get_table(table_ref)
@@ -57,12 +59,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Endpoint for uploading and start of data pipeline
-
 
 @app.post("/upload", tags=["Data Pipeline"],
           name="Upload Multiple Files and Start Pipeline")
 async def upload_files(files: List[UploadFile] = File(...)):
+    """Endpoint for uploading and start of data pipeline"""
     try:
         for file in files:
             logger.info(f"Processing file: {file.filename}")
@@ -101,10 +102,9 @@ async def upload_files(files: List[UploadFile] = File(...)):
             status_code=412,
             detail="Couldn't process request at this time. Please try again later")
 
-# Data Pipeline Process
-
 
 async def process_file(blob):
+    """Data Pipeline Process"""
     try:
         logger.info(f"Processing file: {blob.name}")
         # Read the file into memory
@@ -147,7 +147,7 @@ async def process_file(blob):
             deidentified_blob = gcs_client.bucket(
                 GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
             deidentified_blob.upload_from_string(deidentified_text)
-
+            send_text_bq(blob.name,deidentified_text)
             logger.info(
                 f"Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
         else:
@@ -229,18 +229,17 @@ async def process_file(blob):
                 deidentified_blob = gcs_client.bucket(
                     GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
                 deidentified_blob.upload_from_string(deidentified_text)
-
+                send_text_bq(blob.name,deidentified_text)
                 logger.info(
                     f"Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
     except Exception as e:
         logger.error(f"Uploader script failed due to {e}")
 
-# Endpoint useful for fetching data as JSON
-
 
 @app.post("/fetch", tags=["Stream Data"],
           name="Fetch PII Deidentified Data as JSON")
 async def fetch_processed_text(name: str):
+    """Endpoint useful for fetching data as JSON"""
     logger.info(f"Fetching processed text for name: {name}")
 
     # Fetch processed text from Google Cloud Storage based on name
@@ -261,18 +260,16 @@ async def fetch_processed_text(name: str):
 
     return {"texts": texts}
 
-# Endpoint useful for downloading text
-
 
 @app.post("/download", tags=["Stream Data"],
           name="Download PII Deidentified Data")
 async def download_processed_text(name: str):
+    """Endpoint useful for downloading text"""
     logger.info(f"Downloading processed text for name: {name}")
 
     # Fetch processed text from Google Cloud Storage based on name
     blobs = gcs_client.bucket(GCS_BUCKET).list_blobs(prefix="deidentified/")
     text_files = [blob.name for blob in blobs if blob.name.endswith(".txt")]
-
     matching_files = []
     for file in text_files:
         if name in file:
@@ -297,10 +294,9 @@ async def download_processed_text(name: str):
             "Content-Disposition": f"attachment; filename={name}_processed.txt"},
     )
 
-# Update metadata content for a given folder in a given BQ table
-
 
 async def process_bucket(table_name, folder_name=None):
+    """Update metadata content for a given folder in a given BQ table"""
     # Get the bucket
     bucket = gcs_client.get_bucket(GCS_BUCKET)
 
@@ -359,10 +355,9 @@ async def process_bucket(table_name, folder_name=None):
         logger.info(
             f"No files found in the specified bucket {GCS_BUCKET} / folder {folder_name}.")
 
-# Runs metadata updation for each folder
-
 
 async def metadata_handler():
+    """Runs metadata updation for each folder"""
     try:
         await process_bucket("raw_file_meta_direct")
         await process_bucket("processed_meta_direct", "processed")
@@ -370,11 +365,10 @@ async def metadata_handler():
     except Exception as e:
         logger.error(f"Uploader script failed due to {e}")
 
-# Endpoint is useful for manual metadata updation
 
-
-@app.put("/update_bq", tags=["Data Pipeline"], name="Manual Metadata Update")
+@app.patch("/update_metatables", tags=["Data Pipeline"], name="Manual Metadata Update")
 async def force_update_metadata():
+    """Endpoint is useful for manual metadata updation"""
     try:
         asyncio.create_task(metadata_handler())
         return {
@@ -385,10 +379,9 @@ async def force_update_metadata():
             status_code=412,
             detail="Couldn't process request at this time. Please try again later")
 
-# Function to get proccessed status from Big Query
-
 
 async def get_processed_status():
+    """Function to get proccessed status from Big Query"""
     query = f"SELECT * FROM `{PROJECT_ID}.{REPORTING_DATASET}.processed_view`"
     results = bq_client.query(query)
     processed_dict = dict()
@@ -401,16 +394,15 @@ async def get_processed_status():
     for row in results:
         deidentified_dict[row['file_name']] = row['size']
     logger.info("Prepared Dictionary for Deidentified View Successfully")
-    return {"ocr_complete": processed_dict,
-            "deidentify_complete": deidentified_dict}
-
-# Endpoint is useful for fetching list of files processed
+    return {"files_deidentified_count":len(deidentified_dict),
+            "deidentify_complete_files": deidentified_dict}
 
 
 @app.post("/processed_files_list",
           tags=["Data Pipeline"],
           name="Fetch List Of File Processed")
 async def fetch_processed_status():
+    """Endpoint is useful for fetching list of files processed"""
     try:
         result = await get_processed_status()
         logger.info("Processed File List Fetched Successfully")
@@ -421,26 +413,35 @@ async def fetch_processed_status():
             status_code=412,
             detail="Couldn't process request at this time. Please try again later")
 
-# Upload drug database to BigQuery
+
+async def run_sql_file(sql_file):
+    """Define an async function to run a sql file in bigquery"""
+    with open(sql_file, "r") as f:
+        query = f.read()
+    logger.info(f"Now Running BQ Interactive Query File -> {sql_file}")
+    # Run the query asynchronously and return the job object
+    job = bq_client.query(query, job_config=bigquery.QueryJobConfig(priority=bigquery.QueryPriority.INTERACTIVE))
+    return job
 
 
-# @app.post("/upload_drug_db",
-#           tags=["Data Pipeline"],
-#           name="Upload Drug Database")
-# async def upload_drug_db(data_file: UploadFile = File(...)):
-#     try:
-#         await drug_db_update(data_file)
-#         return {"process": "File Upload Started. Please check DB in sometime."}
-#     except Exception as e:
-#         logger.error(f"Error occured while uploading DB: {e}")
-#         raise HTTPException(
-#             status_code=412,
-#             detail="Couldn't process request at this time. Please try again later")
+@app.patch("/update_bq_schema", tags=["Data Pipeline"], name="Update/Fix Big Query View Schema")
+async def update_bq_schema():
+    """Define an endpoint to run all the sql files in parallel"""
+    tasks = [asyncio.create_task(run_sql_file(sql_file)) for sql_file in sql_files]
+    task_name = [{"task_id": task.get_name()} for task in tasks]
+    logger.info(f"BQ Interactive SQL Update is processing -> {task_name}")
+    return {"process":"Schema update mechanism started. Please check status in sometime."}
 
 
-# async def drug_db_update(data_file):
-#     df = pd.read_csv(
-#         StringIO(str(data_file.file.read(), 'utf-8')), encoding='utf-8')
-#     dataset_ref = bq_client.dataset(BQ_DATASET)
-#     table_ref = dataset_ref.table(DRUG_DB_TABLE)
-#     bq_client.load_table_from_dataframe(df, table_ref).result()
+def send_text_bq(filename, deidentified_text):
+    """Define a function that takes filename and deidentified text as input and inserts them into the table"""
+    table_id = f"{PROJECT_ID}.{BQ_DATASET}.deidentified_text"
+    # Create a row dictionary with the column names and values
+    row = {"filename": filename, "deidentified_text": deidentified_text,"recordstamp": str(datetime.datetime.now())}
+    # Insert the row into the table using the insert_rows_json method
+    errors = bq_client.insert_rows_json(table_id, [row])
+    # Check if there are any errors and print them
+    if errors:
+        logger.error(f"Error occured while adding {filename} to BQ:", errors)
+    else:
+        logger.info(f"Successfully added deidentified text for {filename} to BQ")
