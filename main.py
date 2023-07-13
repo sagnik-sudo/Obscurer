@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from google.cloud import storage, bigquery, dlp_v2,language_v1, documentai
+from google.cloud import storage, bigquery, dlp_v2, language_v1, documentai
 from google.protobuf.json_format import MessageToDict
 import os
 import io
@@ -134,7 +134,8 @@ async def process_file(blob):
                 "deidentify_config": {
                     "info_type_transformations": {
                         "transformations": [
-                            {"primitive_transformation": {"replace_with_info_type_config": {}}}
+                            {"primitive_transformation": {
+                                "replace_with_info_type_config": {}}}
                         ]
                     }
                 },
@@ -147,7 +148,7 @@ async def process_file(blob):
             deidentified_blob = gcs_client.bucket(
                 GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
             deidentified_blob.upload_from_string(deidentified_text)
-            send_text_bq(blob.name,deidentified_text)
+            send_text_bq(blob.name, deidentified_text)
             logger.info(
                 f"SUCCESS: Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
         else:
@@ -168,7 +169,8 @@ async def process_file(blob):
             elif file_extension == "webp":
                 mime_type = "image/webp"
             else:
-                logger.error(f"CAUTION: Unsupported file type: {file_extension}")
+                logger.error(
+                    f"CAUTION: Unsupported file type: {file_extension}")
                 return
 
             # Load Binary Data into Document AI RawDocument Object
@@ -216,7 +218,8 @@ async def process_file(blob):
                     "deidentify_config": {
                         "info_type_transformations": {
                             "transformations": [
-                                {"primitive_transformation": {"replace_with_info_type_config": {}}}
+                                {"primitive_transformation": {
+                                    "replace_with_info_type_config": {}}}
                             ]
                         }
                     },
@@ -229,7 +232,7 @@ async def process_file(blob):
                 deidentified_blob = gcs_client.bucket(
                     GCS_BUCKET).blob(f"deidentified/{blob.name}.txt")
                 deidentified_blob.upload_from_string(deidentified_text)
-                send_text_bq(blob.name,deidentified_text)
+                send_text_bq(blob.name, deidentified_text)
                 logger.info(
                     f"SUCCESS: Stored deidentified text for file '{blob.name}' in Google Cloud Storage")
     except Exception as e:
@@ -394,12 +397,12 @@ async def get_processed_status():
     for row in results:
         deidentified_dict[row['file_name']] = row['size']
     logger.info("SUCCESS: Prepared Dictionary for Deidentified View")
-    return {"files_deidentified_count":len(deidentified_dict),
+    return {"files_deidentified_count": len(deidentified_dict),
             "deidentify_complete_files": deidentified_dict}
 
 
 @app.post("/processed_files_list",
-          tags=["Data Pipeline"],
+          tags=["Stream Data"],
           name="Fetch List Of File Processed")
 async def fetch_processed_status():
     """Endpoint is useful for fetching list of files processed"""
@@ -408,7 +411,8 @@ async def fetch_processed_status():
         logger.info("SUCCESS: Processed File List Fetched")
         return result
     except Exception as e:
-        logger.error(f"CAUTION: Error occured while fetching file process status: {e}")
+        logger.error(
+            f"CAUTION: Error occured while fetching file process status: {e}")
         raise HTTPException(
             status_code=412,
             detail="Couldn't process request at this time. Please try again later")
@@ -420,29 +424,34 @@ async def run_sql_file(sql_file):
         query = f.read()
     logger.info(f"Now Running BigQuery Interactive Query File -> {sql_file}")
     # Run the query asynchronously and return the job object
-    job = bq_client.query(query, job_config=bigquery.QueryJobConfig(priority=bigquery.QueryPriority.INTERACTIVE))
+    job = bq_client.query(query, job_config=bigquery.QueryJobConfig(
+        priority=bigquery.QueryPriority.INTERACTIVE))
     return job
 
 
 @app.patch("/update_bq_schema", tags=["Data Pipeline"], name="Update/Fix Big Query View Schema")
 async def update_bq_schema():
     """Define an endpoint to run all the sql files in parallel"""
-    tasks = [asyncio.create_task(run_sql_file(sql_file)) for sql_file in sql_files]
+    tasks = [asyncio.create_task(run_sql_file(sql_file))
+             for sql_file in sql_files]
     task_name = [{"task_id": task.get_name()} for task in tasks]
-    logger.info(f"BigQuery Interactive SQL Update is processing -> {task_name}")
-    return {"process":"Schema update mechanism started. Please check status in sometime."}
+    logger.info(
+        f"BigQuery Interactive SQL Update is processing -> {task_name}")
+    return {"process": "Schema update mechanism started. Please check status in sometime."}
 
 
 def send_text_bq(filename, deidentified_text):
     """Define a function that takes filename and deidentified text as input and inserts them into the table"""
     table_id = f"{PROJECT_ID}.{BQ_DATASET}.deidentified_text"
     # Create a row dictionary with the column names and values
-    row = {"filename": filename, "deidentified_text": deidentified_text,"recordstamp": str(datetime.datetime.now())}
+    row = {"filename": filename, "deidentified_text": deidentified_text,
+           "recordstamp": str(datetime.datetime.now())}
     # Insert the row into the table using the insert_rows_json method
     errors = bq_client.insert_rows_json(table_id, [row])
     # Check if there are any errors and print them
     if errors:
-        logger.error(f"CAUTION: Error occured while adding {filename} to BQ:", errors)
+        logger.error(
+            f"CAUTION: Error occured while adding {filename} to BQ:", errors)
     else:
         logger.info(f"SUCCESS: Added deidentified text for {filename} to BQ")
 
@@ -452,7 +461,8 @@ async def analyze_and_insert_data():
         # Define the BigQuery table schema for the output table
         output_table_schema = [
             bigquery.SchemaField("filename", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("deidentified_text", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("deidentified_text",
+                                 "STRING", mode="REQUIRED"),
             bigquery.SchemaField("medicine_name", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("recordstamp", "TIMESTAMP", mode="REQUIRED")
         ]
@@ -473,10 +483,13 @@ async def analyze_and_insert_data():
         # Prepare the rows for insertion into the output table
         rows = []
         for row in results:
-            document = language_v1.Document(content=row.deidentified_text, type_=language_v1.Document.Type.PLAIN_TEXT)
-            response = language_client.analyze_entities(request={"document": document})
+            document = language_v1.Document(
+                content=row.deidentified_text, type_=language_v1.Document.Type.PLAIN_TEXT)
+            response = language_client.analyze_entities(
+                request={"document": document})
             entities = response.entities
-            medicine_names = [entity.name for entity in entities if entity.type == language_v1.Entity.Type.CONSUMER_GOOD]
+            medicine_names = [
+                entity.name for entity in entities if entity.type == language_v1.Entity.Type.CONSUMER_GOOD]
 
             for medicine_name in medicine_names:
                 rows.append({
@@ -501,9 +514,80 @@ async def analyze_and_insert_data():
         load_job.result()  # Wait for the job to complete
 
         if load_job.errors:
-            logger.error(f"CAUTION: Error occured while medicine name extraction: {load_job.errors}")
+            logger.error(
+                f"CAUTION: Error occured while medicine name extraction: {load_job.errors}")
         else:
             logger.info("SUCCESS: Medicine Names have been extracted.")
     except Exception as e:
-        logger.error(f"CAUTION: Error occured while medicine name extraction: {e}")
+        logger.error(
+            f"CAUTION: Error occured while medicine name extraction: {e}")
 
+
+async def get_processed_count():
+    """Function to get proccessed counts from Big Query"""
+    query = f"SELECT * FROM `{PROJECT_ID}.{REPORTING_DATASET}.file_processed_dash`"
+    results = bq_client.query(query)
+    output_dict = dict()
+    unprocessed_dict = dict()
+    for row in results:
+        unprocessed_dict[row['Content_Type']] = row['Unprocessed_Count']
+    processed_dict = dict()
+    for row in results:
+        processed_dict[row['Content_Type']] = row['Processed_Count']
+    deidentified_dict = dict()
+    for row in results:
+        deidentified_dict[row['Content_Type']] = row['Deidentified_Count']
+    output_dict["Unprocessed"] = unprocessed_dict
+    output_dict["Processed"] = processed_dict
+    output_dict["Deidentified"] = deidentified_dict
+    logger.info("SUCCESS: Prepared Dictionary for Count of Processed Files")
+    return output_dict
+
+
+@app.post("/count_files_processed",
+          tags=["Stream Data"],
+          name="Fetch Count Of Files Processed")
+async def fetch_count_processed():
+    """Endpoint is useful for fetching count of files processed"""
+    try:
+        result = await get_processed_count()
+        logger.info("SUCCESS: Processed File Count Fetched")
+        return result
+    except Exception as e:
+        logger.error(
+            f"CAUTION: Error occured while fetching file process status: {e}")
+        raise HTTPException(
+            status_code=412,
+            detail="Couldn't process request at this time. Please try again later")
+
+
+async def get_medical_files(filename):
+    """Function to get proccessed status from Big Query"""
+    query = f"SELECT * FROM `{PROJECT_ID}.{REPORTING_DATASET}.medicines_found` where filename = '{filename}'"
+    results = bq_client.query(query)
+    output_dict = dict()
+    for row in results:
+        output_dict[row['filename']] = row['medicine_names']
+    logger.info("SUCCESS: Prepared Dictionary for Medicine Related Files")
+    return output_dict
+
+
+@app.post("/fetch_medicine_names",
+          tags=["Stream Data"],
+          name="Fetch Count Of Files Processed")
+async def fetch_medicine_names(filename):
+    """Endpoint is useful for fetching list of files processed"""
+    try:
+        result = await get_medical_files(filename)
+        if bool(result):
+            logger.info(f"SUCCESS: Medicine Names fetched for {filename}")
+            return {"process": result}
+        else:
+            logger.info(f"ATTENTION: Medicine Name not found for {filename}")
+            return {"error": "Couldn't fetch medicine names for mentioned file. Please check spelling, or retry again later.", "filename": filename}
+    except Exception as e:
+        logger.error(
+            f"CAUTION: Error occured while fetching file process status: {e}")
+        raise HTTPException(
+            status_code=412,
+            detail="Couldn't process request at this time. Please try again later")
