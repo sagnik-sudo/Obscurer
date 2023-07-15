@@ -23,7 +23,7 @@ app = FastAPI(
     docs_url="/",
     redoc_url="/cw-redoc",
     contact={
-        "name": "Developer - Sagnik Das, Somdutta Paul, Tania Rana",
+        "name": "Developer - Sagnik Das, Tania Rana, Somdutta Paul",
         "email": "sagnik.das03@infosys.com",
     },
 )
@@ -574,9 +574,9 @@ async def get_medical_files(filename):
 
 @app.post("/fetch_medicine_names",
           tags=["Stream Data"],
-          name="Fetch Count Of Files Processed")
+          name="Fetch Medicine Names from Processed Files")
 async def fetch_medicine_names(filename):
-    """Endpoint is useful for fetching list of files processed"""
+    """Endpoint is useful for fetching medicine names from files processed"""
     try:
         result = await get_medical_files(filename)
         if bool(result):
