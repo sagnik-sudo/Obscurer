@@ -18,7 +18,7 @@ END
   CASE
     WHEN MAX(deidentified.file_name) IS NOT NULL THEN "Processed"
   ELSE
-  "UnProcessed"
+  "Unprocessed"
 END
   AS deidentified,
 FROM
