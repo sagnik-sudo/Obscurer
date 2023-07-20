@@ -18,10 +18,9 @@ Obscurer is a data pipeline application that uses FastAPI and Google Cloud Platf
 - Run the main.py script to start the data pipeline
 - Visit the web service URL to upload documents and query results
 
-- You can also watch the detailed stepwise video walkthrough 
-<!-- [here](https://www.youtube.com/watch?v=G8ZE-O2ABjM) -->
+- You can also watch the detailed stepwise video walkthrough by clicking below video link
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/G8ZE-O2ABjM/0.jpg)](https://www.youtube.com/watch?v=G8ZE-O2ABjM)
+[![Product Walkthrough](https://img.youtube.com/vi/G8ZE-O2ABjM/0.jpg)](https://www.youtube.com/watch?v=G8ZE-O2ABjM)
 
 
 ## Installation
